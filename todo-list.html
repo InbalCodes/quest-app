@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Form for adding categories */
+        .add-category-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .add-category-form input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .add-category-form button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            background: #4a90d9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .add-category-form button:active {
+            background: #3a7bc8;
+        }
+
+        /* Category container */
+        .category {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .category-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .delete-category-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .delete-category-btn:active {
+            color: #e74c3c;
+        }
+
+        /* Task list */
+        .task-list {
+            list-style: none;
+            margin-bottom: 12px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Checkbox styling */
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .task-item.done .task-checkbox {
+            background: #4a90d9;
+            border-color: #4a90d9;
+        }
+
+        .task-item.done .task-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+        }
+
+        .task-text {
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        /* Done task styling */
+        .task-item.done .task-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* Add task form */
+        .add-task-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-task-form input {
+            flex: 1;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .add-task-form button {
+            padding: 10px 16px;
+            font-size: 1rem;
+            background: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .add-task-form button:active {
+            background: #4cae4c;
+        }
+
+        /* Empty state */
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 32px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Task Manager</h1>
+
+    <!-- Form to add new categories -->
+    <div class="add-category-form">
+        <input type="text" id="category-input" placeholder="New category name...">
+        <button onclick="addCategory()">Add</button>
+    </div>
+
+    <!-- Container for all categories -->
+    <div id="categories-container">
+        <p class="empty-message">No categories yet. Add one above!</p>
+    </div>
+
+    <script>
+        // ============================================
+        // DATA MANAGEMENT
+        // ============================================
+
+        // Load data from localStorage or return empty array
+        function loadData() {
+            const data = localStorage.getItem('taskManagerData');
+            return data ? JSON.parse(data) : [];
+        }
+
+        // Save data to localStorage
+        function saveData(data) {
+            localStorage.setItem('taskManagerData', JSON.stringify(data));
+        }
+
+        // ============================================
+        // CATEGORY FUNCTIONS
+        // ============================================
+
+        // Add a new category
+        function addCategory() {
+            const input = document.getElementById('category-input');
+            const name = input.value.trim();
+
+            if (!name) return; // Ignore empty input
+
+            const data = loadData();
+
+            // Create new category object
+            const newCategory = {
+                id: Date.now(), // Simple unique ID
+                name: name,
+                tasks: []
+            };
+
+            data.push(newCategory);
+            saveData(data);
+            input.value = ''; // Clear input
+            renderCategories();
+        }
+
+        // Delete a category by ID
+        function deleteCategory(categoryId) {
+            const data = loadData();
+            const filtered = data.filter(cat => cat.id !== categoryId);
+            saveData(filtered);
+            renderCategories();
+        }
+
+        // ============================================
+        // TASK FUNCTIONS
+        // ============================================
+
+        // Add a task to a category
+        function addTask(categoryId) {
+            const input = document.getElementById(`task-input-${categoryId}`);
+            const text = input.value.trim();
+
+            if (!text) return; // Ignore empty input
+
+            const data = loadData();
+            const category = data.find(cat => cat.id === categoryId);
+
+            if (category) {
+                // Create new task object
+                const newTask = {
+                    id: Date.now(),
+                    text: text,
+                    done: false
+                };
+
+                category.tasks.push(newTask);
+                saveData(data);
+                input.value = ''; // Clear input
+                renderCategories();
+            }
+        }
+
+        // Toggle task done/not done status
+        function toggleTask(categoryId, taskId) {
+            const data = loadData();
+            const category = data.find(cat => cat.id === categoryId);
+
+            if (category) {
+                const task = category.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.done = !task.done;
+                    saveData(data);
+                    renderCategories();
+                }
+            }
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+
+        // Render all categories and their tasks
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            const data = loadData();
+
+            // Show empty message if no categories
+            if (data.length === 0) {
+                container.innerHTML = '<p class="empty-message">No categories yet. Add one above!</p>';
+                return;
+            }
+
+            // Build HTML for each category
+            let html = '';
+
+            data.forEach(category => {
+                html += `
+                    <div class="category">
+                        <div class="category-header">
+                            <span class="category-title">${escapeHtml(category.name)}</span>
+                            <button class="delete-category-btn" onclick="deleteCategory(${category.id})">×</button>
+                        </div>
+
+                        <ul class="task-list">
+                            ${renderTasks(category)}
+                        </ul>
+
+                        <div class="add-task-form">
+                            <input type="text" id="task-input-${category.id}" placeholder="New task..." 
+                                   onkeypress="handleTaskKeypress(event, ${category.id})">
+                            <button onclick="addTask(${category.id})">Add</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Render tasks for a category
+        function renderTasks(category) {
+            if (category.tasks.length === 0) {
+                return ''; // No tasks message not needed, just show empty
+            }
+
+            return category.tasks.map(task => `
+                <li class="task-item ${task.done ? 'done' : ''}" 
+                    onclick="toggleTask(${category.id}, ${task.id})">
+                    <div class="task-checkbox"></div>
+                    <span class="task-text">${escapeHtml(task.text)}</span>
+                </li>
+            `).join('');
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Handle Enter key for category input
+        document.getElementById('category-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addCategory();
+            }
+        });
+
+        // Handle Enter key for task inputs
+        function handleTaskKeypress(event, categoryId) {
+            if (event.key === 'Enter') {
+                addTask(categoryId);
+            }
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        // Render categories on page load
+        renderCategories();
+    </script>
+</body>
+</html>

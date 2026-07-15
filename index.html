@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Quest</title>
+    <style>
+        /* ── Design Tokens ── */
+        :root {
+            --bg: #0B1120;
+            --surface: #151F32;
+            --surface-hover: #1C2A42;
+            --border: #243049;
+            --text: #E2E8F0;
+            --text-muted: #64748B;
+            --gold: #FBBF24;
+            --gold-glow: rgba(251, 191, 36, 0.25);
+            --fire: #F97316;
+            --fire-glow: rgba(249, 115, 22, 0.3);
+            --success: #34D399;
+            --success-glow: rgba(52, 211, 153, 0.25);
+            --accent: #3B82F6;
+            --accent-hover: #2563EB;
+            --danger: #EF4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #EFF3F8;
+                --surface: #FFFFFF;
+                --surface-hover: #F8FAFC;
+                --border: #D1D9E6;
+                --text: #0F172A;
+                --text-muted: #64748B;
+                --gold: #D97706;
+                --gold-glow: rgba(217, 119, 6, 0.15);
+                --fire: #EA580C;
+                --fire-glow: rgba(234, 88, 12, 0.15);
+                --success: #059669;
+                --success-glow: rgba(5, 150, 105, 0.15);
+                --accent: #2563EB;
+                --accent-hover: #1D4ED8;
+                --danger: #DC2626;
+            }
+        }
+        :root[data-theme="light"] {
+            --bg: #EFF3F8;
+            --surface: #FFFFFF;
+            --surface-hover: #F8FAFC;
+            --border: #D1D9E6;
+            --text: #0F172A;
+            --text-muted: #64748B;
+            --gold: #D97706;
+            --gold-glow: rgba(217, 119, 6, 0.15);
+            --fire: #EA580C;
+            --fire-glow: rgba(234, 88, 12, 0.15);
+            --success: #059669;
+            --success-glow: rgba(5, 150, 105, 0.15);
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --danger: #DC2626;
+        }
+        :root[data-theme="dark"] {
+            --bg: #0B1120;
+            --surface: #151F32;
+            --surface-hover: #1C2A42;
+            --border: #243049;
+            --text: #E2E8F0;
+            --text-muted: #64748B;
+            --gold: #FBBF24;
+            --gold-glow: rgba(251, 191, 36, 0.25);
+            --fire: #F97316;
+            --fire-glow: rgba(249, 115, 22, 0.3);
+            --success: #34D399;
+            --success-glow: rgba(52, 211, 153, 0.25);
+            --accent: #3B82F6;
+            --accent-hover: #2563EB;
+            --danger: #EF4444;
+        }
+
+        /* ── Reset ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Utility ── */
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0,0,0,0); border: 0;
+        }
+
+        /* ── Login Screen ── */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--gold), var(--fire));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .login-tagline {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            margin-bottom: 48px;
+        }
+
+        .btn-google {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-google:hover { background: var(--surface-hover); border-color: var(--text-muted); }
+        .btn-google svg { width: 20px; height: 20px; }
+
+        .login-demo {
+            margin-top: 20px;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            font-family: var(--font);
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .login-demo:hover { color: var(--text); }
+
+        /* ── App Shell ── */
+        #app-screen { display: none; }
+        #app-screen.active { display: block; }
+        #login-screen.hidden { display: none; }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 16px 100px;
+        }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            margin-bottom: 8px;
+        }
+
+        .top-bar-brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--gold), var(--fire));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            cursor: pointer;
+        }
+
+        /* ── Stats Section ── */
+        .stats-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .level-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .level-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--fire));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px var(--gold-glow);
+        }
+
+        .level-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .level-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .level-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .xp-bar-container {
+            width: 100%;
+        }
+
+        .xp-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .xp-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .xp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--fire));
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-width: 2px;
+        }
+
+        .streak-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 90px;
+            gap: 2px;
+        }
+
+        .streak-flame {
+            font-size: 2rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 8px var(--fire-glow));
+        }
+
+        .streak-flame.active {
+            animation: flamePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes flamePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .streak-count {
+            font-size: 1.3rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: var(--fire);
+        }
+
+        .streak-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        /* ── Today Stats ── */
+        .today-stats {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .today-stat {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .today-stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .today-stat-value.gold { color: var(--gold); }
+        .today-stat-value.green { color: var(--success); }
+
+        .today-stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        /* ── Category ── */
+        .category {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            margin-left: 8px;
+        }
+
+        .category-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+            border-radius: 6px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .category-delete:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+        /* ── Task Item ── */
+        .task-list { list-style: none; }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.1s;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .task-item:last-child { border-bottom: none; }
+        .task-item:active { background: var(--surface-hover); }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .task-item.done .task-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+            box-shadow: 0 0 10px var(--success-glow);
+        }
+
+        .task-item.done .task-checkbox::after {
+            content: '✓';
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .task-text {
+            font-size: 0.95rem;
+            flex: 1;
+            word-break: break-word;
+            transition: opacity 0.2s, color 0.2s;
+        }
+
+        .task-item.done .task-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .task-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0;
+            transition: opacity 0.15s, color 0.15s;
+        }
+        .task-item:hover .task-delete { opacity: 1; }
+        .task-delete:hover { color: var(--danger); }
+
+        @media (pointer: coarse) {
+            .task-delete { opacity: 0.6; }
+        }
+
+        /* ── XP Float ── */
+        .xp-float {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--gold);
+            pointer-events: none;
+            animation: xpFloat 1s ease-out forwards;
+        }
+
+        @keyframes xpFloat {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        /* ── Level Up Banner ── */
+        .level-up-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--gold), var(--fire));
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-align: center;
+            animation: bannerSlide 3s ease-in-out forwards;
+        }
+
+        @keyframes bannerSlide {
+            0% { transform: translateY(-100%); }
+            15% { transform: translateY(0); }
+            85% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+
+        /* ── Add Task / Category Forms ── */
+        .add-task-form {
+            display: flex;
+            gap: 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .add-task-form input {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: var(--font);
+            outline: none;
+        }
+
+        .add-task-form input::placeholder { color: var(--text-muted); }
+
+        .add-task-form button {
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s;
+        }
+        .add-task-form button:hover { color: var(--accent-hover); }
+
+        .add-category-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .add-category-bar input {
+            flex: 1;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .add-category-bar input:focus { border-color: var(--accent); }
+        .add-category-bar input::placeholder { color: var(--text-muted); }
+
+        .add-category-bar button {
+            padding: 14px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .add-category-bar button:hover { background: var(--accent-hover); }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 0.95rem;
+        }
+
+        /* ── Confetti Canvas ── */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* ── Animations ── */
+        @keyframes taskComplete {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .task-completing {
+            animation: taskComplete 0.3s ease-out;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Sign Out ── */
+        .sign-out-section {
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        .btn-sign-out {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: var(--font);
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .btn-sign-out:hover { color: var(--text); border-color: var(--text-muted); }
+
+        /* ── Focus Task Highlight ── */
+        .task-item.focus {
+            background: var(--gold-glow);
+            border-left: 3px solid var(--gold);
+            padding-left: 13px;
+        }
+
+        .task-focus-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gold);
+            background: var(--gold-glow);
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ── Focus Picker Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlide 0.3s ease-out;
+        }
+
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            padding: 24px 24px 16px;
+            text-align: center;
+        }
+
+        .modal-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .modal-body {
+            padding: 0 16px 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-cat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            padding: 8px 8px 4px;
+        }
+
+        .modal-task-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: var(--font);
+            cursor: pointer;
+            margin-bottom: 6px;
+            text-align: left;
+            transition: background 0.1s, border-color 0.15s;
+        }
+
+        .modal-task-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--gold);
+        }
+
+        .modal-task-btn::before {
+            content: '⭐';
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .modal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .modal-skip {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: var(--font);
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+        .modal-skip:hover { color: var(--text); }
+
+        .modal-empty {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Login Screen ── -->
+    <div id="login-screen">
+        <div class="login-logo">Quest</div>
+        <p class="login-tagline">Your tasks, gamified.</p>
+        <button class="btn-google" onclick="signInWithGoogle()">
+            <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Sign in with Google
+        </button>
+        <button class="login-demo" onclick="startDemoMode()">Try without account</button>
+    </div>
+
+    <!-- ── App Screen ── -->
+    <div id="app-screen">
+        <div class="app-container">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <span class="top-bar-brand">Quest</span>
+                <div class="top-bar-actions">
+                    <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">◐</button>
+                    <img class="user-avatar" id="user-avatar" src="" alt="" style="display:none" onclick="handleAvatarClick()">
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-section">
+                <div class="level-card">
+                    <div class="level-header">
+                        <div class="level-badge" id="level-badge">1</div>
+                        <div class="level-info">
+                            <div class="level-title">Level <span id="level-num">1</span></div>
+                            <div class="level-name" id="level-name">Rookie</div>
+                        </div>
+                    </div>
+                    <div class="xp-bar-container">
+                        <div class="xp-label">
+                            <span id="xp-current">0 XP</span>
+                            <span id="xp-next">30 XP</span>
+                        </div>
+                        <div class="xp-bar">
+                            <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="streak-card">
+                    <div class="streak-flame" id="streak-flame">🔥</div>
+                    <div class="streak-count" id="streak-count">0</div>
+                    <div class="streak-label">Streak</div>
+                </div>
+            </div>
+
+            <!-- Today Stats -->
+            <div class="today-stats">
+                <div class="today-stat">
+                    <div class="today-stat-value gold" id="today-xp">0</div>
+                    <div class="today-stat-label">XP Today</div>
+                </div>
+                <div class="today-stat">
+                    <div class="today-stat-value green" id="today-tasks">0</div>
+                    <div class="today-stat-label">Done Today</div>
+                </div>
+            </div>
+
+            <!-- Add Category -->
+            <div class="add-category-bar">
+                <input type="text" id="category-input" placeholder="New category..."
+                       onkeydown="if(event.key==='Enter')addCategory()">
+                <button onclick="addCategory()">Add</button>
+            </div>
+
+            <!-- Categories -->
+            <div id="categories-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎯</div>
+                    <p class="empty-state-text">Add a category to start your quest!</p>
+                </div>
+            </div>
+
+            <!-- Sign Out -->
+            <div class="sign-out-section">
+                <button class="btn-sign-out" id="sign-out-btn" onclick="signOut()">Sign out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Picker Modal -->
+    <div id="focus-modal" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">⚡</div>
+                <div class="modal-title">What's your quest today?</div>
+                <div class="modal-subtitle">Pick one task to focus on</div>
+            </div>
+            <div class="modal-body" id="focus-modal-body"></div>
+            <div class="modal-footer">
+                <button class="modal-skip" onclick="closeFocusModal()">Skip for now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- ══════════════════════════════════════════
+         FIREBASE SDK — uncomment when ready
+         ══════════════════════════════════════════ -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <script>
+    // ════════════════════════════════════════════
+    // CONFIGURATION
+    // ════════════════════════════════════════════
+
+    /*
+     * To enable Firebase sync:
+     * 1. Go to https://console.firebase.google.com
+     * 2. Create a new project
+     * 3. Enable Authentication → Google provider
+     * 4. Create a Firestore database
+     * 5. Paste your config below and set USE_FIREBASE = true
+     * 6. Uncomment the Firebase SDK script tags above
+     * 7. Set Firestore rules:
+     *    rules_version = '2';
+     *    service cloud.firestore {
+     *      match /databases/{database}/documents {
+     *        match /users/{userId} {
+     *          allow read, write: if request.auth != null && request.auth.uid == userId;
+     *        }
+     *      }
+     *    }
+     */
+
+    const USE_FIREBASE = true;
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyA8heUheL-oT9npwVskALt-6ehvco7Z_Fg",
+        authDomain: "quest-app-c7d04.firebaseapp.com",
+        projectId: "quest-app-c7d04",
+        storageBucket: "quest-app-c7d04.firebasestorage.app",
+        messagingSenderId: "347357891205",
+        appId: "1:347357891205:web:0131185dcd462d7e6d77ec"
+    };
+
+    // ════════════════════════════════════════════
+    // GAMIFICATION CONFIG
+    // ════════════════════════════════════════════
+
+    const XP_PER_TASK = 15;
+    const STREAK_BONUS_PER_DAY = 3;
+
+    const LEVEL_TITLES = [
+        'Rookie', 'Starter', 'Achiever', 'Hustler', 'Go-Getter',
+        'Pro', 'Expert', 'Master', 'Champion', 'Legend',
+        'Mythic', 'Transcendent', 'Immortal', 'Godlike', 'Ascended'
+    ];
+
+    function xpForLevel(level) {
+        if (level <= 1) return 0;
+        return Math.floor(25 * level * (level + 1));
+    }
+
+    function getLevelFromXp(totalXp) {
+        let level = 1;
+        while (xpForLevel(level + 1) <= totalXp) level++;
+        return level;
+    }
+
+    function getLevelTitle(level) {
+        return LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+    }
+
+    // ════════════════════════════════════════════
+    // STATE
+    // ════════════════════════════════════════════
+
+    let db = null;
+    let currentUser = null;
+    let appData = null;
+
+    function defaultData() {
+        return {
+            xp: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastCompletionDate: null,
+            categories: [],
+            todayXp: 0,
+            todayTasks: 0,
+            todayDate: todayStr(),
+            focusTaskId: null,
+            focusDate: null
+        };
+    }
+
+    function todayStr() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    // ════════════════════════════════════════════
+    // DATA LAYER
+    // ════════════════════════════════════════════
+
+    function loadLocal() {
+        const raw = localStorage.getItem('quest_data');
+        return raw ? JSON.parse(raw) : null;
+    }
+
+    function saveLocal(data) {
+        localStorage.setItem('quest_data', JSON.stringify(data));
+    }
+
+    async function loadData() {
+        if (USE_FIREBASE && currentUser) {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                appData = doc.data();
+            } else {
+                appData = defaultData();
+                await saveData();
+            }
+        } else {
+            appData = loadLocal() || defaultData();
+        }
+        resetTodayIfNeeded();
+        appData.categories.forEach(cat => {
+            cat.tasks.forEach(t => {
+                if (t.done && t.xpClaimed === undefined) t.xpClaimed = true;
+            });
+        });
+    }
+
+    async function saveData() {
+        if (USE_FIREBASE && currentUser) {
+            await db.collection('users').doc(currentUser.uid).set(appData);
+        }
+        saveLocal(appData);
+    }
+
+    function resetTodayIfNeeded() {
+        if (appData.todayDate !== todayStr()) {
+            appData.todayDate = todayStr();
+            appData.todayXp = 0;
+            appData.todayTasks = 0;
+            appData.focusTaskId = null;
+            appData.focusDate = null;
+        }
+    }
+
+    // ════════════════════════════════════════════
+    // AUTH
+    // ════════════════════════════════════════════
+
+    async function signInWithGoogle() {
+        if (!USE_FIREBASE) {
+            startDemoMode();
+            return;
+        }
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await firebase.auth().signInWithPopup(provider);
+            currentUser = result.user;
+            await loadData();
+            showApp();
+        } catch (e) {
+            console.error('Auth error:', e);
+            startDemoMode();
+        }
+    }
+
+    function startDemoMode() {
+        currentUser = null;
+        loadData().then(() => {
+            showApp();
+        });
+    }
+
+    function signOut() {
+        if (USE_FIREBASE && firebase.auth) {
+            firebase.auth().signOut();
+        }
+        currentUser = null;
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.remove('active');
+    }
+
+    function handleAvatarClick() {
+        if (confirm('Sign out?')) signOut();
+    }
+
+    function showApp() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.add('active');
+
+        const avatar = document.getElementById('user-avatar');
+        if (currentUser && currentUser.photoURL) {
+            avatar.src = currentUser.photoURL;
+            avatar.style.display = 'block';
+        } else {
+            avatar.style.display = 'none';
+        }
+
+        const signOutBtn = document.getElementById('sign-out-btn');
+        signOutBtn.textContent = currentUser ? 'Sign out' : 'Reset data';
+
+        renderAll();
+        requestNotificationPermission();
+
+        if (shouldShowFocusPicker()) {
+            showFocusModal();
+        }
+    }
+
+    // ════════════════════════════════════════════
+    // CATEGORY & TASK ACTIONS
+    // ════════════════════════════════════════════
+
+    async function addCategory() {
+        const input = document.getElementById('category-input');
+        const name = input.value.trim();
+        if (!name) return;
+
+        appData.categories.push({
+            id: Date.now().toString(),
+            name: name,
+            tasks: []
+        });
+
+        input.value = '';
+        await saveData();
+        renderAll();
+        const cats = document.querySelectorAll('.category');
+        if (cats.length) cats[cats.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function deleteCategory(catId) {
+        if (!confirm('Delete this category and all its tasks?')) return;
+        appData.categories = appData.categories.filter(c => c.id !== catId);
+        await saveData();
+        renderAll();
+    }
+
+    async function addTask(catId) {
+        const input = document.getElementById('task-input-' + catId);
+        const text = input.value.trim();
+        if (!text) return;
+
+        const cat = appData.categories.find(c => c.id === catId);
+        if (!cat) return;
+
+        cat.tasks.push({
+            id: Date.now().toString(),
+            text: text,
+            done: false,
+            completedAt: null,
+            xpClaimed: false
+        });
+
+        input.value = '';
+        await saveData();
+        renderAll();
+        document.getElementById('task-input-' + catId)?.focus();
+    }
+
+    async function toggleTask(catId, taskId, event) {
+        const cat = appData.categories.find(c => c.id === catId);
+        if (!cat) return;
+        const task = cat.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const wasUndone = !task.done;
+        task.done = !task.done;
+        task.completedAt = task.done ? new Date().toISOString() : null;
+
+        if (wasUndone && !task.xpClaimed) {
+            task.xpClaimed = true;
+            const earned = awardXp();
+            updateStreak();
+            appData.todayTasks++;
+
+            await saveData();
+            renderAll();
+
+            showXpFloat(event.currentTarget, earned);
+            launchConfetti(event.clientX, event.clientY);
+
+            const newLevel = getLevelFromXp(appData.xp);
+            const oldLevel = getLevelFromXp(appData.xp - earned);
+            if (newLevel > oldLevel) {
+                showLevelUp(newLevel);
+            }
+        } else {
+            await saveData();
+            renderAll();
+        }
+    }
+
+    async function deleteTask(catId, taskId, e) {
+        e.stopPropagation();
+        const cat = appData.categories.find(c => c.id === catId);
+        if (!cat) return;
+        cat.tasks = cat.tasks.filter(t => t.id !== taskId);
+        await saveData();
+        renderAll();
+    }
+
+    // ════════════════════════════════════════════
+    // GAMIFICATION ENGINE
+    // ════════════════════════════════════════════
+
+    function awardXp() {
+        const streakBonus = appData.currentStreak * STREAK_BONUS_PER_DAY;
+        const earned = XP_PER_TASK + streakBonus;
+        appData.xp += earned;
+        appData.todayXp += earned;
+        return earned;
+    }
+
+    function updateStreak() {
+        const today = todayStr();
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+        if (appData.lastCompletionDate === today) {
+            return;
+        } else if (appData.lastCompletionDate === yesterday) {
+            appData.currentStreak++;
+        } else if (appData.lastCompletionDate !== today) {
+            appData.currentStreak = 1;
+        }
+
+        appData.lastCompletionDate = today;
+        appData.longestStreak = Math.max(appData.longestStreak, appData.currentStreak);
+    }
+
+    // ════════════════════════════════════════════
+    // RENDERING
+    // ════════════════════════════════════════════
+
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    function renderAll() {
+        renderStats();
+        renderCategories();
+    }
+
+    function renderStats() {
+        const level = getLevelFromXp(appData.xp);
+        const currentLevelXp = xpForLevel(level);
+        const nextLevelXp = xpForLevel(level + 1);
+        const progressXp = appData.xp - currentLevelXp;
+        const neededXp = nextLevelXp - currentLevelXp;
+        const pct = neededXp > 0 ? Math.min((progressXp / neededXp) * 100, 100) : 100;
+
+        document.getElementById('level-badge').textContent = level;
+        document.getElementById('level-num').textContent = level;
+        document.getElementById('level-name').textContent = getLevelTitle(level);
+        document.getElementById('xp-current').textContent = progressXp + ' XP';
+        document.getElementById('xp-next').textContent = neededXp + ' XP';
+        document.getElementById('xp-bar-fill').style.width = pct + '%';
+
+        document.getElementById('streak-count').textContent = appData.currentStreak;
+        const flame = document.getElementById('streak-flame');
+        flame.classList.toggle('active', appData.currentStreak > 0);
+
+        resetTodayIfNeeded();
+        document.getElementById('today-xp').textContent = appData.todayXp;
+        document.getElementById('today-tasks').textContent = appData.todayTasks;
+    }
+
+    function renderCategories() {
+        const container = document.getElementById('categories-container');
+
+        if (appData.categories.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎯</div>
+                    <p class="empty-state-text">Add a category to start your quest!</p>
+                </div>`;
+            return;
+        }
+
+        const focusId = appData.focusDate === todayStr() ? appData.focusTaskId : null;
+
+        container.innerHTML = appData.categories.map(cat => {
+            const doneCount = cat.tasks.filter(t => t.done).length;
+            const totalCount = cat.tasks.length;
+
+            const sortedTasks = [...cat.tasks].sort((a, b) => {
+                const aFocus = a.id === focusId ? 1 : 0;
+                const bFocus = b.id === focusId ? 1 : 0;
+                return bFocus - aFocus;
+            });
+
+            return `
+            <div class="category">
+                <div class="category-header">
+                    <div>
+                        <span class="category-name">${escapeHtml(cat.name)}</span>
+                        ${totalCount > 0 ? `<span class="category-count">${doneCount}/${totalCount}</span>` : ''}
+                    </div>
+                    <button class="category-delete" onclick="deleteCategory('${cat.id}')" aria-label="Delete category">×</button>
+                </div>
+                <ul class="task-list">
+                    ${sortedTasks.map(task => {
+                        const isFocus = task.id === focusId;
+                        return `
+                        <li class="task-item ${task.done ? 'done' : ''} ${isFocus ? 'focus' : ''}" onclick="toggleTask('${cat.id}','${task.id}',event)">
+                            <div class="task-checkbox"></div>
+                            <span class="task-text">${escapeHtml(task.text)}</span>
+                            ${isFocus ? '<span class="task-focus-badge">Today</span>' : ''}
+                            <button class="task-delete" onclick="deleteTask('${cat.id}','${task.id}',event)" aria-label="Delete task">×</button>
+                        </li>`;
+                    }).join('')}
+                </ul>
+                <div class="add-task-form">
+                    <input type="text" id="task-input-${cat.id}" placeholder="Add a task..."
+                           onclick="event.stopPropagation()"
+                           onkeydown="if(event.key==='Enter'){event.stopPropagation();addTask('${cat.id}')}">
+                    <button onclick="event.stopPropagation();addTask('${cat.id}')">Add</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ════════════════════════════════════════════
+    // VISUAL EFFECTS
+    // ════════════════════════════════════════════
+
+    function showXpFloat(taskEl, amount) {
+        const float = document.createElement('div');
+        float.className = 'xp-float';
+        float.textContent = '+' + amount + ' XP';
+        taskEl.style.position = 'relative';
+        taskEl.appendChild(float);
+        taskEl.classList.add('task-completing');
+        setTimeout(() => {
+            float.remove();
+            taskEl.classList.remove('task-completing');
+        }, 1000);
+    }
+
+    function showLevelUp(newLevel) {
+        const banner = document.createElement('div');
+        banner.className = 'level-up-banner';
+        banner.innerHTML = `⚡ Level ${newLevel} — ${getLevelTitle(newLevel)}!`;
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 3200);
+    }
+
+    // ════════════════════════════════════════════
+    // DAILY FOCUS PICKER
+    // ════════════════════════════════════════════
+
+    function shouldShowFocusPicker() {
+        if (!appData || !appData.categories.length) return false;
+        if (appData.focusDate === todayStr() && appData.focusTaskId) return false;
+        const hasUndoneTasks = appData.categories.some(c => c.tasks.some(t => !t.done));
+        return hasUndoneTasks;
+    }
+
+    function showFocusModal() {
+        const body = document.getElementById('focus-modal-body');
+        const undoneTasks = [];
+
+        appData.categories.forEach(cat => {
+            const tasks = cat.tasks.filter(t => !t.done);
+            if (tasks.length) undoneTasks.push({ cat, tasks });
+        });
+
+        if (!undoneTasks.length) {
+            body.innerHTML = '<div class="modal-empty">All tasks are done! Add new ones first.</div>';
+        } else {
+            body.innerHTML = undoneTasks.map(({ cat, tasks }) => `
+                <div class="modal-cat-label">${escapeHtml(cat.name)}</div>
+                ${tasks.map(t => `
+                    <button class="modal-task-btn" onclick="pickFocusTask('${t.id}')">
+                        ${escapeHtml(t.text)}
+                    </button>
+                `).join('')}
+            `).join('');
+        }
+
+        document.getElementById('focus-modal').style.display = 'flex';
+    }
+
+    async function pickFocusTask(taskId) {
+        appData.focusTaskId = taskId;
+        appData.focusDate = todayStr();
+        await saveData();
+        closeFocusModal();
+        renderAll();
+    }
+
+    function closeFocusModal() {
+        document.getElementById('focus-modal').style.display = 'none';
+    }
+
+    // ════════════════════════════════════════════
+    // MORNING NOTIFICATION
+    // ════════════════════════════════════════════
+
+    function requestNotificationPermission() {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') scheduleMorningNotification();
+            });
+        }
+    }
+
+    function scheduleMorningNotification() {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+        const now = new Date();
+        const morning = new Date(now);
+        morning.setHours(8, 0, 0, 0);
+        if (morning <= now) morning.setDate(morning.getDate() + 1);
+
+        const delay = morning - now;
+        setTimeout(() => {
+            new Notification('Quest ⚡', {
+                body: "What's your quest for today?",
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚡</text></svg>',
+                tag: 'quest-morning'
+            });
+            scheduleMorningNotification();
+        }, delay);
+    }
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+        scheduleMorningNotification();
+    }
+
+    // ════════════════════════════════════════════
+    // CONFETTI SYSTEM
+    // ════════════════════════════════════════════
+
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const ctx = confettiCanvas.getContext('2d');
+    let particles = [];
+    let confettiRunning = false;
+
+    function resizeCanvas() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const CONFETTI_COLORS = ['#FBBF24', '#F97316', '#34D399', '#3B82F6', '#A78BFA', '#F472B6'];
+
+    function launchConfetti(x, y) {
+        for (let i = 0; i < 35; i++) {
+            const angle = (Math.PI * 2 * i) / 35 + (Math.random() - 0.5) * 0.5;
+            const speed = 3 + Math.random() * 5;
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 3,
+                color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+                size: 4 + Math.random() * 4,
+                life: 1,
+                decay: 0.015 + Math.random() * 0.01,
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.2
+            });
+        }
+        if (!confettiRunning) {
+            confettiRunning = true;
+            animateConfetti();
+        }
+    }
+
+    function animateConfetti() {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+        particles = particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.15;
+            p.vx *= 0.99;
+            p.life -= p.decay;
+            p.rotation += p.rotSpeed;
+
+            if (p.life <= 0) return false;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation);
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+            ctx.restore();
+
+            return true;
+        });
+
+        if (particles.length > 0) {
+            requestAnimationFrame(animateConfetti);
+        } else {
+            confettiRunning = false;
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+    }
+
+    // ════════════════════════════════════════════
+    // THEME
+    // ════════════════════════════════════════════
+
+    function toggleTheme() {
+        const root = document.documentElement;
+        const current = root.getAttribute('data-theme');
+        const isDark = current === 'dark' || (!current && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('quest_theme', isDark ? 'light' : 'dark');
+    }
+
+    (function restoreTheme() {
+        const saved = localStorage.getItem('quest_theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+
+    // ════════════════════════════════════════════
+    // FIREBASE INIT
+    // ════════════════════════════════════════════
+
+    if (USE_FIREBASE && typeof firebase !== 'undefined') {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        firebase.auth().onAuthStateChanged(async user => {
+            if (user) {
+                currentUser = user;
+                await loadData();
+                showApp();
+            }
+        });
+    }
+    </script>
+</body>
+</html>
