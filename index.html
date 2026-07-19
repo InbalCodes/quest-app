@@ -163,7 +163,8 @@
         /* ── App Shell ── */
         #app-screen { display: none; }
         #app-screen.active { display: block; }
-        #login-screen.hidden { display: none; }
+        #login-screen.hidden { display: none !important; }
+        #login-screen.visible { display: flex; }
 
         .app-container {
             max-width: 480px;
@@ -819,7 +820,7 @@
 <body>
 
     <!-- ── Login Screen ── -->
-    <div id="login-screen">
+    <div id="login-screen" style="display:none">
         <div class="login-logo">Quest</div>
         <p class="login-tagline">Your tasks, gamified.</p>
         <button class="btn-google" onclick="signInWithGoogle()">
@@ -1099,8 +1100,9 @@
             firebase.auth().signOut();
         }
         currentUser = null;
-        document.getElementById('login-screen').classList.remove('hidden');
         document.getElementById('app-screen').classList.remove('active');
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('login-screen').classList.add('visible');
     }
 
     function handleAvatarClick() {
@@ -1108,6 +1110,7 @@
     }
 
     function showApp() {
+        document.getElementById('login-screen').classList.remove('visible');
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('app-screen').classList.add('active');
 
@@ -1551,13 +1554,19 @@
     if (USE_FIREBASE && typeof firebase !== 'undefined') {
         firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.firestore();
-        firebase.auth().onAuthStateChanged(async user => {
-            if (user) {
-                currentUser = user;
-                await loadData();
-                showApp();
-            }
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+            firebase.auth().onAuthStateChanged(async user => {
+                if (user) {
+                    currentUser = user;
+                    await loadData();
+                    showApp();
+                } else {
+                    document.getElementById('login-screen').classList.add('visible');
+                }
+            });
         });
+    } else {
+        document.getElementById('login-screen').classList.add('visible');
     }
     </script>
 </body>
